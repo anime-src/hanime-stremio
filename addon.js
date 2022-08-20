@@ -40,7 +40,7 @@ const manifest = {
   resources: ["catalog", "stream", "meta"],
   types: ["movie"],
   name: "Hanime",
-  icon: "https://img.android-apk.org/imgs/3/9/6/3963a4a6ae1e14f9824fc89f57bc5a17.png",
+  icon: "https://bit.ly/3ca6ETu",
   description:
     "Enjoy your unlimited hentai & anime collection. We are the definitive source for the best curated 720p / 1080p HD hentai videos for free.",
 };
