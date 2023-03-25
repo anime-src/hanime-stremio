@@ -7,7 +7,7 @@ const autohority = "hanime.tv";
 
 const manifest = {
   id: "hanime-addon",
-  version: "1.0.0",
+  version: "1.0.1",
   behaviorHints: {
     adult: true,
   },
