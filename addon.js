@@ -5,9 +5,16 @@ const helper = require("./lib/addon_helper");
 
 const autohority = "hanime.tv";
 
+const oneDay = 24 * 60 * 60 // in seconds
+
+const cache = {
+	maxAge: 1.5 * oneDay, // 1.5 days
+	staleError: 6 * 30 * oneDay // 6 months
+}
+
 const manifest = {
   id: "hanime-addon",
-  version: "1.0.1",
+  version: "1.0.2",
   behaviorHints: {
     adult: true,
   },
@@ -80,7 +87,7 @@ builder.defineMetaHandler(async (args) => {
 builder.defineStreamHandler(async (args) => {
   const id = args.id;
   const resp = await apis.hanime.addon.getStream(autohority, id);
-  const streams = resp.map((obj) => {
+  const streamData = resp.map((obj) => {
     const name = helper.titleize(obj.video_stream_group_id.replace(/-/g, " "));
     return {
       name: `Hanime.TV\n${obj.height}p`,
@@ -106,7 +113,13 @@ builder.defineStreamHandler(async (args) => {
       },
     };
   });
-  return Promise.resolve({ streams });
+
+  let result = { 
+    streams:  streamData.filter(item => item.url && item.url.trim() !== ''),
+    cacheMaxAge: cache.maxAge,
+		staleError: cache.staleError
+   };
+  return Promise.resolve(result);
 });
 
 module.exports = builder.getInterface();
