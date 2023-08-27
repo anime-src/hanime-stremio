@@ -12,3 +12,5 @@ Fork from https://github.com/mrcanelas/hanime-tv-addon but made it to work with 
 - Hanime Most Views
 
 For installation/usage check https://github.com/Stremio/stremio-addon-sdk/blob/master/README.md
+
+Deployed version available at https://86f0740f37f6-hanime-stremio.baby-beamup.club/manifest.json
