@@ -75,7 +75,7 @@ builder.defineMetaHandler(async (args) => {
     id: resp.slug,
     name: resp.name,
     logo: constants.logo,
-    background: resp.poster_url,
+    background: helper.proxyURL(resp.poster_url),
     genre: new_gen,
     description: resp.description.replace(/([</p>\n])/g, "").trim(),
     posterShape: "landscape",
