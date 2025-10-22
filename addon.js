@@ -75,7 +75,7 @@ builder.defineMetaHandler(async (args) => {
     id: resp.slug,
     name: resp.name,
     logo: constants.logo,
-    background: resp.poster_url,
+    background: helper.proxyURL(resp.poster_url),
     genre: new_gen,
     description: resp.description.replace(/([</p>\n])/g, "").trim(),
     posterShape: "landscape",
@@ -98,18 +98,22 @@ builder.defineStreamHandler(async (args) => {
       behaviorHints: {
         proxyHeaders: {
           request: {
-            "accept-encoding": "gzip, deflate, br",
-            "accept-language": "en-US,en;q=0.9",
-            "origin": "https://player.hanime.tv",
-            "sec-ch-ua-mobile": "?0",
-            "sec-ch-ua-platform": "Windows",
-            "sec-fetch-dest": "empty",
-            "sec-fetch-mode": "cors",
-            "sec-fetch-site": "cross-site",
-            "user-agent":
+            Host: "hanime.tv",
+            "User-Agent":
               "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36",
+            Accept: "*/*",
+            "Accept-Language": "en-US,en;q=0.5",
+            "Accept-Encoding": "gzip, deflate, br, zstd",
+            Origin: "https://player.hanime.tv",
+            DNT: "1",
+            "Sec-GPC": "1",
+            Connection: "keep-alive",
+            "Sec-Fetch-Dest": "empty",
+            "Sec-Fetch-Mode": "cors",
+            "Sec-Fetch-Site": "same-site",
           },
         },
+        notWebReady: true,
       },
     };
   });
