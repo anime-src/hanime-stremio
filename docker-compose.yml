@@ -1,0 +1,48 @@
+version: "3.9"
+
+services:
+  hanime-addon:
+    build: .
+    container_name: hanime-stremio-addon
+    ports:
+      - "61327:61327"
+    environment:
+      # Server configuration
+      - PUBLIC_URL=http://localhost:61327
+      - NODE_ENV=development
+      - PORT=61327
+      
+      # Logging configuration
+      # Options: debug, info, warn, error
+      - LOG_LEVEL=info
+      
+      # Cache configuration
+      # Set to 'false' to disable in-memory caching (all requests hit API)
+      - CACHE_ENABLED=true
+      # Set to 'false' to disable browser caching (forces fresh content)
+      - BROWSER_CACHE=true
+      
+      # Addon version (optional, defaults to package.json version)
+      - ADDON_VERSION=1.0.3
+    
+    # Restart policy
+    restart: unless-stopped
+    
+    # Health check
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:61327/manifest.json', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      interval: 30s
+      timeout: 3s
+      start_period: 5s
+      retries: 3
+    
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+        reservations:
+          cpus: '0.5'
+          memory: 256M
+
