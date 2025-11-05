@@ -75,7 +75,8 @@ For remote access, replace `localhost` with your server's IP address or domain.
 #### Logging Configuration
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `LOG_LEVEL` | `info` | Logging level (debug/info/warn/error) |
+| `LOG_LEVEL` | `info` | Logging level (debug/info/warn/error/silent) |
+| `LOGGING_ENABLED` | `true` | Enable logging (set to `false` to disable all logs) |
 
 #### Addon Customization
 | Variable | Default | Description |
