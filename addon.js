@@ -85,6 +85,8 @@ const manifest = {
   types: [constants.contentTypes.Anime, constants.contentTypes.Movie, constants.contentTypes.Series],
   name: config.addon.name,
   icon: config.addon.icon,
+  logo: config.addon.logo,
+  background: config.addon.background,
   description: config.addon.description
 };
 

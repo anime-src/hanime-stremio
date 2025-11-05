@@ -6,6 +6,8 @@
  */
 
 const express = require('express');
+const path = require('path');
+const fs = require('fs');
 const { getRouter } = require('stremio-addon-sdk');
 const landingTemplate = require('stremio-addon-sdk/src/landingTemplate');
 const config = require('./lib/config');
@@ -58,6 +60,12 @@ function serveHTTP(addonInterface, opts = {}) {
     res.end(landingHTML);
   });
 
+  // Serve static images (try public/images first for Vercel, then images for local)
+  const publicImagesPath = path.join(__dirname, 'public', 'images');
+  const imagesPath = path.join(__dirname, 'images');
+  const imagePath = fs.existsSync(publicImagesPath) ? publicImagesPath : imagesPath;
+  app.use('/images', express.static(imagePath));
+
   // Image proxy route
   app.get('/proxy/images/:type/:image', createImageProxyMiddleware(config));
 
@@ -71,7 +79,6 @@ function serveHTTP(addonInterface, opts = {}) {
       // Set PUBLIC_URL if not already set
       if (!process.env.PUBLIC_URL) {
         process.env.PUBLIC_URL = baseUrl;
-        config.server.publicUrl = baseUrl;
       }
 
       const url = `${baseUrl}/manifest.json`;
