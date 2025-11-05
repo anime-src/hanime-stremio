@@ -6,8 +6,8 @@ A modern, performant Stremio addon for browsing and streaming content from Hanim
 
 ## Features
 
-- **Multiple Catalogs**: Browse by most recent, most likes, most views, or newest releases
-- **Genre Filtering**: Filter content by 65+ genre tags
+- **Multiple Catalogs**: Browse by general, series, recent, most likes, most views, or newest releases
+- **Genre Filtering**: Filter content by 64 genre tags
 - **Search Functionality**: Find specific content by name
 - **Smart Caching**: LRU cache with configurable TTL reduces API calls by 70-90%
 - **Configurable Logging**: Debug, info, warn, or error levels for different environments
@@ -37,6 +37,15 @@ podman-compose up -d
 npm install
 npm start
 ```
+
+## Deployed Version
+
+A hosted version of this addon is available at:
+```
+https://anime-src-hanime-stremio.vercel.app/manifest.json
+```
+
+You can install it directly in Stremio without running your own server.
 
 ## Installation in Stremio
 
@@ -68,7 +77,7 @@ For remote access, replace `localhost` with your server's IP address or domain.
 # Start with default settings
 npm start
 
-# Start with debug logging
+# Start with debug logging and caching disabled
 npm run dev
 
 # Start production mode with minimal logging
@@ -89,6 +98,8 @@ environment:
 
 ## Available Catalogs
 
+- **Hanime**: General catalog with all content
+- **Hanime Series**: Multi-episode series only
 - **Hanime Recent**: Sorted by creation date
 - **Hanime Most Likes**: Sorted by likes
 - **Hanime Most Views**: Sorted by views  
@@ -96,7 +107,7 @@ environment:
 
 All catalogs support:
 - Search by name
-- Genre filtering (65+ tags)
+- Genre filtering (64 tags)
 - Pagination
 
 ### Testing
