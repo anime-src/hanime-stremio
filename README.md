@@ -1,7 +1,5 @@
 # Hanime.tv Stremio Addon
 
-![Stremio](https://www.stremio.com/website/stremio-purple-small.png)
-
 A modern, performant Stremio addon for browsing and streaming content from Hanime.tv with advanced filtering, caching, and configurable logging.
 
 ## Features
