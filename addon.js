@@ -87,7 +87,8 @@ const manifest = {
   icon: config.addon.icon,
   logo: config.addon.logo,
   background: config.addon.background,
-  description: config.addon.description
+  description: config.addon.description,
+  stremioAddonsConfig: config.addon.stremioAddonsConfig
 };
 
 // Build addon
