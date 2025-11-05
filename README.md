@@ -61,15 +61,40 @@ For remote access, replace `localhost` with your server's IP address or domain.
 
 ### Environment Variables
 
+#### Server Configuration
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `PORT` | `61327` | Server port |
-| `PUBLIC_URL` | Auto-detected | Public URL for image proxying |
+| `PUBLIC_URL` | Auto-detected | Public URL for image proxying and addon assets |
 | `NODE_ENV` | `development` | Environment (development/production) |
-| `LOG_LEVEL` | `info` | Logging level (debug/info/warn/error) |
+
+#### Cache Configuration
+| Variable | Default | Description |
+|----------|---------|-------------|
 | `CACHE_ENABLED` | `true` | Enable in-memory cache (set to `false` to disable) |
 | `BROWSER_CACHE` | `true` | Enable browser caching (set to `false` to disable) |
-| `ADDON_VERSION` | `package.json` | Override addon version (e.g., for testing) |
+
+#### Logging Configuration
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `LOG_LEVEL` | `info` | Logging level (debug/info/warn/error) |
+
+#### Addon Customization
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `ADDON_ID` | `hanime-addon` | Unique identifier for the addon |
+| `ADDON_VERSION` | `package.json` | Override addon version |
+| `ADDON_NAME` | `Hanime` | Display name of the addon |
+| `ADDON_ICON` | `/images/favicon.ico` | Custom icon URL |
+| `ADDON_LOGO` | `/images/logo.jpg` | Custom logo URL |
+| `ADDON_BACKGROUND` | `/images/background.jpg` | Custom background URL |
+| `ADDON_DESCRIPTION` | Default description | Custom addon description |
+
+#### Stremio Addons Configuration (Optional)
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `STREMIO_ADDONS_ISSUER` | None | Issuer for Stremio Addons authentication |
+| `STREMIO_ADDONS_SIGNATURE` | None | Signature for Stremio Addons authentication |
 
 ### Development Scripts
 
@@ -94,7 +119,11 @@ environment:
   - LOG_LEVEL=debug  # or info, warn, error
   - NODE_ENV=production
   - BROWSER_CACHE=false  # Disable browser caching for testing
+  - ADDON_NAME=Custom Hanime Addon
+  - ADDON_DESCRIPTION=My custom description
 ```
+
+> **Note:** All environment variables defined in the [Environment Variables](#environment-variables) section can be added to the `docker-compose.yml` file under the `environment` key.
 
 ## Available Catalogs
 
