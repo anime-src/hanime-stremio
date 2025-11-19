@@ -14,7 +14,7 @@ services:
       
       # Logging configuration
       # Options: debug, info, warn, error
-      - LOG_LEVEL=info
+      - LOG_LEVEL=debug
       
       # Cache configuration
       # Set to 'false' to disable in-memory caching (all requests hit API)

@@ -83,6 +83,7 @@ const manifest = {
   ],
   resources: ['catalog', 'stream', 'meta'],
   types: [constants.contentTypes.Anime, constants.contentTypes.Movie, constants.contentTypes.Series],
+  idPrefixes: [constants.addonPrefix],
   name: config.addon.name,
   icon: config.addon.icon,
   logo: config.addon.logo,
