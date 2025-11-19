@@ -5,11 +5,14 @@ A modern, performant Stremio addon for browsing and streaming content from Hanim
 ## Features
 
 - **Multiple Catalogs**: Browse by general, series, recent, most likes, most views, or newest releases
-- **Genre Filtering**: Filter content by 64 genre tags
+- **Genre Filtering**: Filter content by 80+ genre tags
 - **Search Functionality**: Find specific content by name
-- **Smart Caching**: LRU cache with configurable TTL reduces API calls by 70-90%
+- **Catalog Prefetch**: Optional background service to prefetch all catalog data for instant responses
+- **In-Memory Filtering**: Fast search and genre filtering using prefetched data
+- **Smart Caching**: LRU cache (lru-cache) with configurable TTLs reduces API calls by 70-90%
+- **Parallel Fetching**: Configurable concurrency for faster catalog prefetching
+- **Image Proxy**: CDN authentication with deduplication, retry logic, and rate limiting
 - **Configurable Logging**: Debug, info, warn, or error levels for different environments
-- **Image Proxy**: Handles CDN authentication transparently
 - **Health Checks**: Built-in Docker healthcheck endpoints
 - **Production Ready**: Multi-stage Docker builds, resource limits, and error handling
 
@@ -70,7 +73,26 @@ For remote access, replace `localhost` with your server's IP address or domain.
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `CACHE_ENABLED` | `true` | Enable in-memory cache (set to `false` to disable) |
+| `CACHE_MAX_SIZE` | `1000` | Maximum number of cache entries (LRU eviction) |
+| `CATALOG_CACHE_ENABLED` | `true` | Enable catalog response caching (set to `false` to disable) |
+| `CACHE_CATALOG_TTL` | `7200000` | Catalog cache TTL in milliseconds (default: 2 hours) |
+| `CACHE_META_TTL` | `129600000` | Meta cache TTL in milliseconds (default: 1.5 days) |
+| `CACHE_STREAM_TTL` | `129600000` | Stream cache TTL in milliseconds (default: 1.5 days) |
 | `BROWSER_CACHE` | `true` | Enable browser caching (set to `false` to disable) |
+
+#### Catalog Prefetch Configuration
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `CATALOG_PREFETCH` | `false` | Enable catalog prefetching (set to `true` to enable) |
+| `CATALOG_PREFETCH_INTERVAL` | `7200000` | Refresh interval in milliseconds (default: 2 hours) |
+| `CATALOG_PREFETCH_CONCURRENCY` | `5` | Number of parallel page requests (1-20 recommended) |
+| `CATALOG_PREFETCH_PAGE_DELAY` | `50` | Delay between page batches in milliseconds |
+
+#### Image Proxy Configuration
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `IMAGE_PROXY_QUEUE` | `true` | Enable image proxy request queue (set to `false` to disable) |
+| `IMAGE_PROXY_QUEUE_DELAY` | `100` | Delay between queued requests in milliseconds |
 
 #### Logging Configuration
 | Variable | Default | Description |
@@ -118,6 +140,9 @@ environment:
   - LOG_LEVEL=debug  # or info, warn, error
   - NODE_ENV=production
   - BROWSER_CACHE=false  # Disable browser caching for testing
+  - CATALOG_PREFETCH=true  # Enable catalog prefetching
+  - CATALOG_PREFETCH_CONCURRENCY=10  # Faster prefetching
+  - CACHE_MAX_SIZE=2000  # Larger cache
   - ADDON_NAME=Custom Hanime Addon
   - ADDON_DESCRIPTION=My custom description
 ```
@@ -162,7 +187,9 @@ LOG_LEVEL=debug npm start
 Debug logs include:
 - All HTTP requests with timing
 - API call parameters and responses
-- Cache hits/misses
+- Cache hits/misses and statistics
+- Prefetch progress and catalog sizes
+- Image proxy operations (cache, deduplication, queue)
 - Stream details and validation
 - Error stack traces
 
@@ -182,17 +209,27 @@ Debug logs include:
 
 ### High Memory Usage
 
-1. Reduce cache size in `lib/config.js`
-2. Lower cache TTL to expire entries faster
-3. Check LOG_LEVEL isn't set to debug in production
+1. Reduce cache size: `CACHE_MAX_SIZE=500`
+2. Disable catalog prefetch: `CATALOG_PREFETCH=false`
+3. Lower cache TTLs (in milliseconds)
+4. Check LOG_LEVEL isn't set to debug in production
+
+### Slow Catalog Loading
+
+1. Enable catalog prefetch: `CATALOG_PREFETCH=true`
+2. Increase concurrency: `CATALOG_PREFETCH_CONCURRENCY=10`
+3. Reduce page delay: `CATALOG_PREFETCH_PAGE_DELAY=25`
+4. Increase cache size: `CACHE_MAX_SIZE=2000`
 
 ## Credits
 
 Originally forked from [mrcanelas/hanime-tv-addon](https://github.com/mrcanelas/hanime-tv-addon) with significant refactoring and improvements:
 - Complete architectural redesign with classes and services
-- Intelligent caching layer
+- Catalog prefetch service with parallel fetching and in-memory filtering
+- LRU cache with configurable TTLs (using lru-cache library)
+- Refactored image proxy with deduplication, retry logic, and rate limiting
 - Configurable logging with production optimization
-- Enhanced error handling
+- Enhanced error handling and service separation
 - Better code organization and maintainability
 
 ## License
