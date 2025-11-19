@@ -21,10 +21,8 @@ services:
       - CACHE_ENABLED=true
       # Set to 'false' to disable browser caching (forces fresh content)
       - BROWSER_CACHE=true
-      
-      # Addon version (optional, defaults to package.json version)
-      - ADDON_VERSION=1.0.3
-    
+      - CATALOG_PREFETCH=false
+
     # Restart policy
     restart: unless-stopped
     

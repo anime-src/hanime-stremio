@@ -11,6 +11,7 @@ const constants = require('./lib/constants');
 // Services
 const HanimeApiClient = require('./lib/clients/hanime_api_client');
 const CacheService = require('./lib/services/cache_service');
+const CatalogPrefetchService = require('./lib/services/catalog_prefetch_service');
 
 // Handlers
 const { CatalogHandler, MetaHandler, StreamHandler } = require('./lib/handlers');
@@ -21,8 +22,32 @@ const cache = config.cache.enabled
   ? new CacheService(config.cache.maxSize, config.cache.ttl)
   : null;
 
+// Initialize prefetch service if enabled
+let prefetchService = null;
+if (config.cache.prefetch?.enabled) {
+  prefetchService = new CatalogPrefetchService(apiClient, cache, config);
+  
+  // Start initial prefetch (non-blocking)
+  prefetchService.prefetchAll().catch(err => {
+    logger.error('Initial prefetch failed', { error: err.message });
+  });
+  
+  // Setup periodic refresh
+  const refreshInterval = config.cache.prefetch.refreshInterval;
+  setInterval(() => {
+    logger.info('Starting scheduled catalog prefetch refresh');
+    prefetchService.prefetchAll().catch(err => {
+      logger.error('Scheduled prefetch refresh failed', { error: err.message });
+    });
+  }, refreshInterval);
+  
+  logger.info('Catalog prefetch enabled', {
+    refreshInterval: `${refreshInterval / 1000 / 60} minutes`
+  });
+}
+
 // Initialize handlers with dependency injection
-const catalogHandler = new CatalogHandler(apiClient, logger, config);
+const catalogHandler = new CatalogHandler(apiClient, cache, logger, config, prefetchService);
 const metaHandler = new MetaHandler(apiClient, cache, logger, config);
 const streamHandler = new StreamHandler(apiClient, cache, logger, config);
 
@@ -102,11 +127,42 @@ builder.defineStreamHandler((args) => streamHandler.handle(args));
 
 // Log initialization
 logger.info('Addon initialized', {
-  version: manifest.version,
-  logLevel: config.logging.level,
-  cacheEnabled: config.cache.enabled,
-  cacheSize: config.cache.enabled ? config.cache.maxSize : 'N/A',
-  environment: config.server.env
+  addon: {
+    id: config.addon.id,
+    name: config.addon.name,
+    version: manifest.version
+  },
+  server: {
+    port: config.server.port,
+    environment: config.server.env,
+    publicUrl: config.server.publicUrl
+  },
+  cache: {
+    enabled: config.cache.enabled,
+    maxSize: config.cache.enabled ? config.cache.maxSize : 'N/A',
+    catalogCacheEnabled: config.cache.catalogCacheEnabled,
+    catalogTtl: `${config.cache.catalogTtl / 1000 / 60} minutes`,
+    metaTtl: `${config.cache.metaTtl / 1000 / 60 / 60} hours`,
+    streamTtl: `${config.cache.streamTtl / 1000 / 60 / 60} hours`,
+    browserCache: config.cache.browserCache
+  },
+  imageProxy: {
+    enabled: config.cache.imageProxy.enabled,
+    queueDelay: `${config.cache.imageProxy.queueDelay}ms`
+  },
+  prefetch: {
+    enabled: config.cache.prefetch?.enabled || false,
+    refreshInterval: config.cache.prefetch?.enabled ? `${config.cache.prefetch.refreshInterval / 1000 / 60} minutes` : 'N/A',
+    concurrency: config.cache.prefetch?.enabled ? config.cache.prefetch.concurrency : 'N/A',
+    pageDelay: config.cache.prefetch?.enabled ? `${config.cache.prefetch.pageDelay}ms` : 'N/A'
+  },
+  logging: {
+    level: config.logging.level,
+    enabled: config.logging.enabled
+  },
+  pagination: {
+    itemsPerPage: config.pagination.itemsPerPage
+  }
 });
 
 module.exports = builder.getInterface();
