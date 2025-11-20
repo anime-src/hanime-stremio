@@ -5,6 +5,7 @@
 
 const { addonBuilder } = require('stremio-addon-sdk');
 const config = require('./lib/config');
+const { buildFullUrl } = require('./lib/config');
 const logger = require('./lib/logger');
 const constants = require('./lib/constants');
 
@@ -24,50 +25,52 @@ const manifest = {
     adult: true
   },
   catalogs: [
+    // Anime catalogs
     {
-      type: constants.contentTypes.DEFAULT,
+      type: constants.contentTypes.ANIME,
       name: 'Hanime',
-      id: constants.catalogCategories.Hanime,
+      id: constants.catalogCategories.HANIME,
       extra: constants.catalogExtras
     },
     {
-      type: constants.contentTypes.Series,
-      name: 'Hanime Series',
-      id: constants.catalogCategories.Series,
-      extra: constants.catalogExtras
-    },
-    {
-      type: constants.contentTypes.DEFAULT,
+      type: constants.contentTypes.ANIME,
       name: 'Hanime Recent',
-      id: constants.catalogCategories.Recent,
+      id: constants.catalogCategories.RECENT,
       extra: constants.catalogExtras
     },
     {
-      type: constants.contentTypes.DEFAULT,
+      type: constants.contentTypes.ANIME,
       name: 'Hanime Most Likes',
-      id: constants.catalogCategories.Mostlikes,
+      id: constants.catalogCategories.MOST_LIKES,
       extra: constants.catalogExtras
     },
     {
-      type: constants.contentTypes.DEFAULT,
+      type: constants.contentTypes.ANIME,
       name: 'Hanime Most Views',
-      id: constants.catalogCategories.MostViews,
+      id: constants.catalogCategories.MOST_VIEWS,
       extra: constants.catalogExtras
     },
     {
-      type: constants.contentTypes.DEFAULT,
+      type: constants.contentTypes.ANIME,
       name: 'Hanime Newest',
-      id: constants.catalogCategories.Newset,
+      id: constants.catalogCategories.NEWEST,
+      extra: constants.catalogExtras
+    },
+    // Series catalogs
+    {
+      type: constants.contentTypes.SERIES,
+      name: 'Hanime Series',
+      id: constants.catalogCategories.SERIES,
       extra: constants.catalogExtras
     }
   ],
   resources: ['catalog', 'stream', 'meta'],
-  types: [constants.contentTypes.Anime, constants.contentTypes.Movie, constants.contentTypes.Series],
+  types: [constants.contentTypes.ANIME, constants.contentTypes.SERIES],
   idPrefixes: [constants.addonPrefix],
   name: config.addon.name,
-  icon: config.addon.icon,
-  logo: config.addon.logo,
-  background: config.addon.background,
+  icon: buildFullUrl(config.addon.icon),
+  logo: buildFullUrl(config.addon.logo),
+  background: buildFullUrl(config.addon.background),
   description: config.addon.description,
   stremioAddonsConfig: config.addon.stremioAddonsConfig
 };
@@ -87,16 +90,17 @@ logger.info('Addon initialized', {
   server: {
     port: config.server.port,
     environment: config.server.env,
-    publicUrl: config.server.publicUrl
+    publicUrl: config.server.publicUrl || 'not set (will be auto-detected)'
   },
   cache: {
     enabled: config.cache.enabled,
     maxSize: config.cache.enabled ? config.cache.maxSize : 'N/A',
-    catalogCacheEnabled: config.cache.catalogCacheEnabled,
-    catalogTtl: `${config.cache.catalogTtl / 1000 / 60} minutes`,
-    metaTtl: `${config.cache.metaTtl / 1000 / 60 / 60} hours`,
-    streamTtl: `${config.cache.streamTtl / 1000 / 60 / 60} hours`,
-    browserCache: config.cache.browserCache
+    catalogTtl: `${config.cache.ttl.catalog / 60} minutes`,
+    metaTtl: `${config.cache.ttl.meta / 60 / 60} hours`,
+    streamTtl: `${config.cache.ttl.stream / 60 / 60} hours`,
+    imageTtl: `${config.cache.ttl.image} seconds`,
+    browserCache: config.cache.browserCache,
+    browserCacheMaxAge: `${config.cache.browserCacheMaxAge / 60 / 60} hours`
   },
   imageProxy: {
     enabled: config.cache.imageProxy.enabled,

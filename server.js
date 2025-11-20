@@ -67,8 +67,9 @@ function serveHTTP(addonInterface, opts = {}) {
     server.on('listening', () => {
       const baseUrl = `http://127.0.0.1:${server.address().port}`;
       
-      if (!process.env.PUBLIC_URL) {
-        process.env.PUBLIC_URL = baseUrl;
+      // Set publicUrl at runtime if not already set
+      if (!config.server.publicUrl) {
+        config.server.publicUrl = baseUrl;
       }
 
       const url = `${baseUrl}/manifest.json`;
@@ -77,7 +78,7 @@ function serveHTTP(addonInterface, opts = {}) {
       logger.info('Hanime Stremio Addon Server Started');
       logger.info('='.repeat(60));
       logger.info(`HTTP addon accessible at: ${url}`);
-      logger.info(`Public URL: ${config.server.publicUrl || baseUrl}`);
+      logger.info(`Public URL: ${config.server.publicUrl}`);
       logger.info(`Port: ${server.address().port}`);
       logger.info(`Environment: ${config.server.env}`);
       logger.info(`Log Level: ${config.logging.level}`);

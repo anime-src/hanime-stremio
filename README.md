@@ -43,7 +43,8 @@ npm start
 
 A hosted version of this addon is available at:
 ```
-https://anime-src-hanime-stremio.vercel.app/manifest.json
+https://anime-src-hanime-stremio.netlify.app/manifest.json
+
 ```
 
 You can install it directly in Stremio without running your own server.
