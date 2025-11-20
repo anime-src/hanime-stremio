@@ -1,0 +1,54 @@
+[build]
+  command = "npm install"
+  functions = "netlify/functions"
+  publish = "public"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+[functions]
+  node_bundler = "esbuild"
+  external_node_modules = ["express"]
+  # Enable binary responses for images
+  included_files = ["public/images/**"]
+
+# Route proxy images to function (must come before static images)
+[[redirects]]
+  from = "/proxy/*"
+  to = "/.netlify/functions/addon/proxy/:splat"
+  status = 200
+
+# Serve static images directly (not through function)
+[[redirects]]
+  from = "/images/*"
+  to = "/images/:splat"
+  status = 200
+
+# Route everything else to serverless function
+[[redirects]]
+  from = "/*"
+  to = "/.netlify/functions/addon/:splat"
+  status = 200
+
+[dev]
+  command = "npm start"
+  port = 61327
+  targetPort = 61327
+
+# Headers for binary content (images)
+[[headers]]
+  for = "/proxy/*"
+  [headers.values]
+    Content-Encoding = "identity"
+    X-Content-Type-Options = "nosniff"
+
+# Environment variables (set these in Netlify dashboard)
+# LOG_LEVEL=info
+# NODE_ENV=production
+# CACHE_ENABLED=true
+# CACHE_MAX_SIZE=1000
+# CATALOG_CACHE_ENABLED=true
+# CATALOG_PREFETCH=false  # Must be false for serverless
+# BROWSER_CACHE=true
+# PUBLIC_URL=https://your-site.netlify.app
+

@@ -1,5 +1,7 @@
 # Hanime.tv Stremio Addon
 
+[![Netlify Status](https://api.netlify.com/api/v1/badges/aec4757e-b8a4-4062-b390-29defc8d309d/deploy-status)](https://app.netlify.com/projects/anime-src-hanime-stremio/deploys)
+
 A Stremio addon for browsing and streaming content from Hanime.tv.
 
 ## Quick Start
