@@ -6,7 +6,9 @@
 	"scripts": {
 		"start": "node server.js",
 		"dev": "cross-env LOG_LEVEL=debug CACHE_ENABLED=false node server.js",
-		"prod": "cross-env NODE_ENV=production LOG_LEVEL=warn node server.js"
+		"prod": "cross-env NODE_ENV=production LOG_LEVEL=warn node server.js",
+		"build": "npm install",
+		"netlify:dev": "netlify dev"
 	},
 	"keywords": [
 		"stremio",
@@ -18,9 +20,10 @@
 	"license": "MIT",
 	"dependencies": {
 		"axios": "1.13.2",
+		"cache-manager": "^3.6.3",
 		"express": "^5.1.0",
-		"lru-cache": "^11.2.2",
 		"mime-types": "^3.0.1",
+		"serverless-http": "^3.2.0",
 		"stremio-addon-sdk": "1.6.10"
 	},
 	"devDependencies": {
@@ -28,6 +31,6 @@
 		"cross-env": "^10.1.0"
 	},
 	"engines": {
-		"node": ">=18.0.0 <23.0.0"
+		"node": "18.x || 20.x"
 	}
 }

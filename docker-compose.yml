@@ -22,6 +22,7 @@ services:
       # Set to 'false' to disable browser caching (forces fresh content)
       - BROWSER_CACHE=true
       - CATALOG_PREFETCH=false
+      - CATALOG_CACHE_ENABLED=false
 
     # Restart policy
     restart: unless-stopped

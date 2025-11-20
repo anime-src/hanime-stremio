@@ -21,13 +21,11 @@ const createImageProxyMiddleware = require('./lib/middleware/proxy_image_middlew
 function requestLogger(req, res, next) {
   const start = Date.now();
   
-  // Log incoming request
   logger.info(`${req.method} ${req.path}`, {
     ip: req.ip || req.connection.remoteAddress,
     userAgent: req.get('user-agent')?.substring(0, 50) || 'unknown'
   });
 
-  // Log response when finished
   res.on('finish', () => {
     const duration = Date.now() - start;
     const level = res.statusCode >= 400 ? 'error' : 'info';
@@ -46,44 +44,35 @@ function requestLogger(req, res, next) {
 function serveHTTP(addonInterface, opts = {}) {
   const app = express();
 
-  // Apply request logging
   app.use(requestLogger);
-
-  // Stremio addon routes
   app.use(getRouter(addonInterface));
 
-  // Landing page
   const landingHTML = landingTemplate(addonInterface.manifest);
   app.get('/', (req, res) => {
-    logger.debug('Serving landing page');
     res.setHeader('content-type', 'text/html');
     res.end(landingHTML);
   });
 
-  // Serve static images (try public/images first for Vercel, then images for local)
+  // Try public/images first for Vercel, then images for local
   const publicImagesPath = path.join(__dirname, 'public', 'images');
   const imagesPath = path.join(__dirname, 'images');
   const imagePath = fs.existsSync(publicImagesPath) ? publicImagesPath : imagesPath;
   app.use('/images', express.static(imagePath));
 
-  // Image proxy route
-  app.get('/proxy/images/:type/:image', createImageProxyMiddleware(config));
+  app.get('/proxy/image/:id/:type', createImageProxyMiddleware(config));
 
-  // Start server
   const server = app.listen(opts.port);
 
   return new Promise((resolve, reject) => {
     server.on('listening', () => {
       const baseUrl = `http://127.0.0.1:${server.address().port}`;
       
-      // Set PUBLIC_URL if not already set
       if (!process.env.PUBLIC_URL) {
         process.env.PUBLIC_URL = baseUrl;
       }
 
       const url = `${baseUrl}/manifest.json`;
       
-      // Log server startup
       logger.info('='.repeat(60));
       logger.info('Hanime Stremio Addon Server Started');
       logger.info('='.repeat(60));
