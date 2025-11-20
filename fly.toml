@@ -16,6 +16,15 @@ primary_region = 'fra'
   min_machines_running = 0
   processes = ['app']
 
+# Static files configuration
+[[statics]]
+  guest_path = "/app/public/images"
+  url_prefix = "/images"
+  
+  [statics.headers]
+    Cache-Control = "public, max-age=31536000, immutable"
+    X-Content-Type-Options = "nosniff"
+
 [[vm]]
   memory = '1gb'
   cpu_kind = 'shared'
