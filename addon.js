@@ -71,9 +71,12 @@ const manifest = {
   icon: buildFullUrl(config.addon.icon),
   logo: buildFullUrl(config.addon.logo),
   background: buildFullUrl(config.addon.background),
-  description: config.addon.description,
-  stremioAddonsConfig: config.addon.stremioAddonsConfig
+  description: config.addon.description
 };
+
+if (config.addon.stremioAddonsConfig) {
+  manifest.stremioAddonsConfig = config.addon.stremioAddonsConfig;
+}
 
 const builder = new addonBuilder(manifest);
 
