@@ -5,6 +5,28 @@
 
 A Stremio addon for browsing and streaming content from Hanime.tv.
 
+# ⚠️ Important Announcement – Streams Currently Unavailable
+
+Hanime has **removed all stream URLs from their public API**.  
+Because of this, the current addon version **cannot load any playable streams**, and all videos will fail with playback errors. This affects all users.
+
+---
+
+### ✅ Work in Progress
+
+A new addon version is being developed that will include a **required configuration page**.  
+You will need to enter your **Hanime email and password** so the addon can securely access the streams.  
+Premium users will also automatically get **1080p quality**.
+
+---
+
+### ❗ Please do NOT open new issues
+
+Playback errors are expected until the new version is released.  
+An update will be posted when the new version is ready.
+
+Thank you for your patience!
+
 ## Quick Start
 
 ### Using Docker Compose (Recommended)
