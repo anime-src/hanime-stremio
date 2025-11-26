@@ -13,6 +13,7 @@ const landingTemplate = require('stremio-addon-sdk/src/landingTemplate');
 const config = require('./lib/config');
 const logger = require('./lib/logger');
 const addonInterface = require('./addon');
+const apiClient = addonInterface.apiClient; // Get the shared apiClient instance
 const createImageProxyMiddleware = require('./lib/middleware/proxy_image_middleware');
 
 /**
@@ -20,7 +21,7 @@ const createImageProxyMiddleware = require('./lib/middleware/proxy_image_middlew
  */
 function requestLogger(req, res, next) {
   const start = Date.now();
-  
+
   logger.info(`${req.method} ${req.path}`, {
     ip: req.ip || req.connection.remoteAddress,
     userAgent: req.get('user-agent')?.substring(0, 50) || 'unknown'
@@ -59,21 +60,21 @@ function serveHTTP(addonInterface, opts = {}) {
   const imagePath = fs.existsSync(publicImagesPath) ? publicImagesPath : imagesPath;
   app.use('/images', express.static(imagePath));
 
-  app.get('/proxy/image/:id/:type', createImageProxyMiddleware(config));
+  app.get('/proxy/image/:id/:type', createImageProxyMiddleware(config, apiClient));
 
   const server = app.listen(opts.port);
 
   return new Promise((resolve, reject) => {
     server.on('listening', () => {
       const baseUrl = `http://127.0.0.1:${server.address().port}`;
-      
+
       // Set publicUrl at runtime if not already set
       if (!config.server.publicUrl) {
         config.server.publicUrl = baseUrl;
       }
 
       const url = `${baseUrl}/manifest.json`;
-      
+
       logger.info('='.repeat(60));
       logger.info('Hanime Stremio Addon Server Started');
       logger.info('='.repeat(60));
@@ -84,7 +85,7 @@ function serveHTTP(addonInterface, opts = {}) {
       logger.info(`Log Level: ${config.logging.level}`);
       logger.info('='.repeat(60));
       logger.info('Waiting for requests...');
-      
+
       resolve({ url, server });
     });
 

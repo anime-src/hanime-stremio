@@ -20,6 +20,7 @@
 	"license": "MIT",
 	"dependencies": {
 		"@keyv/postgres": "^2.2.1",
+		"@nekolab/hanime": "^0.3.0",
 		"axios": "1.13.2",
 		"cache-manager": "^7.2.5",
 		"cacheable": "^2.2.0",

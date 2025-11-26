@@ -8,6 +8,7 @@ const path = require('path');
 const { getRouter } = require('stremio-addon-sdk');
 const landingTemplate = require('stremio-addon-sdk/src/landingTemplate');
 const addonInterface = require('../../addon');
+const apiClient = addonInterface.apiClient; // Get the shared apiClient instance
 const createImageProxyMiddleware = require('../../lib/middleware/proxy_image_middleware');
 const config = require('../../lib/config');
 const logger = require('../../lib/logger');
@@ -31,13 +32,13 @@ app.get('/', (req, res) => {
 });
 
 app.get('/proxy/image/:id/:type', (req, res, next) => {
-  logger.debug('Proxy request received', { 
+  logger.debug('Proxy request received', {
     path: req.path,
     id: req.params.id,
-    type: req.params.type 
+    type: req.params.type
   });
   next();
-}, createImageProxyMiddleware(config));
+}, createImageProxyMiddleware(config, apiClient));
 
 app.use('/images', express.static(path.join(__dirname, '../../public/images')));
 
@@ -55,4 +56,3 @@ app.get('/health', (req, res) => {
 module.exports.handler = serverless(app, {
   binary: ['image/*', 'application/octet-stream']
 });
-

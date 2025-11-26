@@ -119,3 +119,4 @@ logger.info('Addon initialized', {
 });
 
 module.exports = builder.getInterface();
+module.exports.apiClient = apiClient; // Export apiClient for use in middleware
