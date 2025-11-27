@@ -15,6 +15,13 @@ const logger = require('./lib/logger');
 const addonInterface = require('./addon');
 const apiClient = addonInterface.apiClient; // Get the shared apiClient instance
 const createImageProxyMiddleware = require('./lib/middleware/proxy_image_middleware');
+const { 
+  createGeneralRateLimiter, 
+  createImageProxyRateLimiter,
+  createGeneralSlowDown,
+  createImageProxySlowDown,
+  getStoreType 
+} = require('./lib/middleware/rate_limit_middleware');
 
 // Handle unhandled errors from Redis and other event emitters
 process.on('unhandledRejection', (reason, promise) => {
@@ -90,6 +97,51 @@ function serveHTTP(addonInterface, opts = {}) {
   const app = express();
 
   app.use(requestLogger);
+
+  // Apply rate limiting and slow-down if enabled
+  // Combining both: slow-down first (gradual delay), then rate limit (hard block)
+  // This provides layered protection - slow-down deters abuse, rate limit prevents overload
+  if (config.rateLimit.enabled || config.slowDown.enabled) {
+    // Apply slow-down first (if enabled) - gradually delays responses
+    if (config.slowDown.enabled) {
+      const generalSlowDown = createGeneralSlowDown();
+      const imageProxySlowDown = createImageProxySlowDown();
+
+      // Apply general slow-down to all routes
+      app.use(generalSlowDown);
+
+      // Apply stricter slow-down to image proxy endpoint
+      app.use('/proxy/image/:id/:type', imageProxySlowDown);
+
+      logger.info('Slow-down enabled', {
+        general: `Starts after ${config.slowDown.general.delayAfter} requests, ${config.slowDown.general.delayMs}ms delay per request (max ${config.slowDown.general.maxDelayMs}ms)`,
+        imageProxy: `Starts after ${config.slowDown.imageProxy.delayAfter} requests, ${config.slowDown.imageProxy.delayMs}ms delay per request (max ${config.slowDown.imageProxy.maxDelayMs}ms)`
+      });
+    }
+
+    // Apply rate limiting (if enabled) - hard blocks after limit
+    if (config.rateLimit.enabled) {
+      const generalLimiter = createGeneralRateLimiter();
+      const imageProxyLimiter = createImageProxyRateLimiter();
+
+      // Apply general rate limit to all routes
+      app.use(generalLimiter);
+
+      // Apply stricter rate limit to image proxy endpoint
+      app.use('/proxy/image/:id/:type', imageProxyLimiter);
+
+      // Get actual store type being used (may differ from config if Redis unavailable)
+      const actualStoreType = getStoreType();
+      
+      logger.info('Rate limiting enabled', {
+        general: `${config.rateLimit.general.max} requests per ${config.rateLimit.general.windowMs / 1000}s`,
+        imageProxy: `${config.rateLimit.imageProxy.max} requests per ${config.rateLimit.imageProxy.windowMs / 1000}s`,
+        store: actualStoreType === 'redis' ? 'Redis (distributed)' : 'Memory (local)'
+      });
+    }
+  } else {
+    logger.debug('Rate limiting and slow-down disabled');
+  }
 
   const landingHTML = landingTemplate(addonInterface.manifest);
   const hasConfig = (addonInterface.manifest.config || []).length > 0;

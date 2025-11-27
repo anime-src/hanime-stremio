@@ -21,6 +21,10 @@ services:
       - CACHE_ENABLED=true
       - BROWSER_CACHE=true
       - REDIS_URL=redis://redis:6379
+      - RATE_LIMIT_ENABLED=true
+      - RATE_LIMIT_USE_REDIS=true
+      - SLOW_DOWN_ENABLED=true
+      - SLOW_DOWN_USE_REDIS=true
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "node", "-e", "require('http').get('http://localhost:61327/manifest.json', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
