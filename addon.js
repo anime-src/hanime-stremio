@@ -4,26 +4,42 @@
  */
 
 const { addonBuilder } = require('stremio-addon-sdk');
-const config = require('./lib/config');
+const { CatalogHandler, MetaHandler, StreamHandler } = require('./lib/handlers');
 const { buildFullUrl } = require('./lib/config');
+
+const config = require('./lib/config');
 const logger = require('./lib/logger');
 const constants = require('./lib/constants');
-
 const HanimeApiClient = require('./lib/clients/hanime_api_client');
-const { CatalogHandler, MetaHandler, StreamHandler } = require('./lib/handlers');
-
+const UserApiManager = require('./lib/clients/user_api_manager');
 const apiClient = new HanimeApiClient(config);
-
+const userApiManager = new UserApiManager();
 const catalogHandler = new CatalogHandler(apiClient, logger, config);
 const metaHandler = new MetaHandler(apiClient, logger, config);
-const streamHandler = new StreamHandler(apiClient, logger, config);
+const streamHandler = new StreamHandler(apiClient, logger, config, userApiManager);
 
 const manifest = {
   id: config.addon.id,
   version: config.addon.version,
   behaviorHints: {
-    adult: true
+    adult: true,
+    configurable: true,
+    configurationRequired: true
   },
+  config: [
+    {
+      key: 'email',
+      title: 'Email',
+      type: 'text',
+      required: true
+    },
+    {
+      key: 'password',
+      title: 'Password',
+      type: 'password',
+      required: true
+    }
+  ],
   catalogs: [
     // Anime catalogs
     {
@@ -103,7 +119,11 @@ logger.info('Addon initialized', {
     streamTtl: `${config.cache.ttl.stream / 60 / 60} hours`,
     imageTtl: `${config.cache.ttl.image} seconds`,
     browserCache: config.cache.browserCache,
-    browserCacheMaxAge: `${config.cache.browserCacheMaxAge / 60 / 60} hours`
+    browserCacheMaxAge: `${config.cache.browserCacheMaxAge / 60 / 60} hours`,
+    upstashUrl: config.cache.upstashUrl ? config.cache.upstashUrl.replace(/\/\/.*@/, '//***@') : null,
+    upstashToken: config.cache.upstashToken,
+    redisUrl: config.cache.redisUrl ? config.cache.redisUrl.replace(/\/\/.*@/, '//***@') : null,
+    postgresUrl: config.cache.postgresUrl ? config.cache.postgresUrl.replace(/\/\/.*@/, '//***@') : null
   },
   imageProxy: {
     enabled: config.cache.imageProxy.enabled,
@@ -120,3 +140,4 @@ logger.info('Addon initialized', {
 
 module.exports = builder.getInterface();
 module.exports.apiClient = apiClient; // Export apiClient for use in middleware
+module.exports.userApiManager = userApiManager; // Export userApiManager for use in middleware

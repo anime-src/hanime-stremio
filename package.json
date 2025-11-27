@@ -20,12 +20,15 @@
 	"license": "MIT",
 	"dependencies": {
 		"@keyv/postgres": "^2.2.1",
+		"@keyv/redis": "^5.1.4",
 		"@nekolab/hanime": "^0.3.0",
+		"@upstash/redis": "^1.35.7",
 		"axios": "1.13.2",
 		"cache-manager": "^7.2.5",
 		"cacheable": "^2.2.0",
 		"express": "^5.1.0",
 		"keyv": "^5.5.4",
+		"keyv-upstash": "^1.0.8",
 		"mime-types": "^3.0.1",
 		"serverless-http": "^3.2.0",
 		"stremio-addon-sdk": "1.6.10"

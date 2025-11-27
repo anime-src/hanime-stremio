@@ -5,6 +5,11 @@ services:
     build: .
     ports:
       - "61327:61327"
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - hanime-network
     environment:
       # Server configuration
       - PUBLIC_URL=http://localhost:61327
@@ -15,6 +20,7 @@ services:
       # Cache configuration
       - CACHE_ENABLED=true
       - BROWSER_CACHE=true
+      - REDIS_URL=redis://redis:6379
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "node", "-e", "require('http').get('http://localhost:61327/manifest.json', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
@@ -31,3 +37,28 @@ services:
           cpus: '0.5'
           memory: 256M
 
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    command: redis-server --maxmemory 768m --maxmemory-policy allkeys-lru
+    restart: unless-stopped
+    networks:
+      - hanime-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 1G
+        reservations:
+          cpus: '1'
+          memory: 256M
+
+networks:
+  hanime-network:
+    driver: bridge

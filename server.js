@@ -16,6 +16,50 @@ const addonInterface = require('./addon');
 const apiClient = addonInterface.apiClient; // Get the shared apiClient instance
 const createImageProxyMiddleware = require('./lib/middleware/proxy_image_middleware');
 
+// Handle unhandled errors from Redis and other event emitters
+process.on('unhandledRejection', (reason, promise) => {
+  if (reason && typeof reason === 'object' && reason.message) {
+    // Check if it's a Redis connection error
+    if (reason.message.includes('Socket closed') || 
+        reason.message.includes('Redis') || 
+        reason.code === 'ERR_INVALID_URL' ||
+        reason.name === 'SocketClosedUnexpectedlyError') {
+      logger.warn('Unhandled Redis error (non-fatal)', {
+        error: reason.message,
+        code: reason.code,
+        name: reason.name
+      });
+      return; // Don't crash on Redis errors
+    }
+  }
+  logger.error('Unhandled promise rejection', {
+    reason: reason instanceof Error ? reason.message : String(reason),
+    stack: reason instanceof Error ? reason.stack : undefined
+  });
+});
+
+process.on('uncaughtException', (err) => {
+  // Check if it's a Redis connection error
+  if (err.message && (
+    err.message.includes('Socket closed') || 
+    err.message.includes('Redis') || 
+    err.code === 'ERR_INVALID_URL' ||
+    err.name === 'SocketClosedUnexpectedlyError'
+  )) {
+    logger.warn('Uncaught Redis error (non-fatal)', {
+      error: err.message,
+      code: err.code,
+      name: err.name
+    });
+    return; // Don't crash on Redis errors
+  }
+  logger.error('Uncaught exception', {
+    error: err.message,
+    stack: err.stack
+  });
+  process.exit(1);
+});
+
 /**
  * Request logging middleware
  */
@@ -46,13 +90,29 @@ function serveHTTP(addonInterface, opts = {}) {
   const app = express();
 
   app.use(requestLogger);
-  app.use(getRouter(addonInterface));
 
   const landingHTML = landingTemplate(addonInterface.manifest);
+  const hasConfig = (addonInterface.manifest.config || []).length > 0;
+
+  // Handle landing page - redirect to /configure if config is required
   app.get('/', (req, res) => {
-    res.setHeader('content-type', 'text/html');
-    res.end(landingHTML);
+    if (hasConfig && addonInterface.manifest.behaviorHints?.configurationRequired) {
+      res.redirect('/configure');
+    } else {
+      res.setHeader('content-type', 'text/html');
+      res.end(landingHTML);
+    }
   });
+
+  // Handle configuration page (required when config is defined)
+  if (hasConfig) {
+    app.get('/configure', (req, res) => {
+      res.setHeader('content-type', 'text/html');
+      res.end(landingHTML);
+    });
+  }
+
+  app.use(getRouter(addonInterface));
 
   // Try public/images first for Vercel, then images for local
   const publicImagesPath = path.join(__dirname, 'public', 'images');

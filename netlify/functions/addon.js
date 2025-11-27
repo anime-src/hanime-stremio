@@ -23,13 +23,28 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(getRouter(addonInterface));
-
 const landingHTML = landingTemplate(addonInterface.manifest);
+const hasConfig = (addonInterface.manifest.config || []).length > 0;
+
+// Handle landing page - redirect to /configure if config is required
 app.get('/', (req, res) => {
-  res.setHeader('content-type', 'text/html');
-  res.end(landingHTML);
+  if (hasConfig && addonInterface.manifest.behaviorHints?.configurationRequired) {
+    res.redirect('/configure');
+  } else {
+    res.setHeader('content-type', 'text/html');
+    res.end(landingHTML);
+  }
 });
+
+// Handle configuration page (required when config is defined)
+if (hasConfig) {
+  app.get('/configure', (req, res) => {
+    res.setHeader('content-type', 'text/html');
+    res.end(landingHTML);
+  });
+}
+
+app.use(getRouter(addonInterface));
 
 app.get('/proxy/image/:id/:type', (req, res, next) => {
   logger.debug('Proxy request received', {

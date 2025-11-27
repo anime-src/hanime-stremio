@@ -10,7 +10,7 @@ COPY package*.json ./
 RUN npm ci --only=production
 
 # Production stage
-FROM node:22-alpine
+FROM node:22-slim
 
 WORKDIR /usr/src/app
 
