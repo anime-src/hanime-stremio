@@ -6,7 +6,7 @@ const serverless = require('serverless-http');
 const express = require('express');
 const path = require('path');
 const { getRouter } = require('stremio-addon-sdk');
-const landingTemplate = require('stremio-addon-sdk/src/landingTemplate');
+const generateLandingHTML = require('../../lib/templates/landing_template');
 const addonInterface = require('../../addon');
 const apiClient = addonInterface.apiClient; // Get the shared apiClient instance
 const createImageProxyMiddleware = require('../../lib/middleware/proxy_image_middleware');
@@ -23,7 +23,7 @@ app.use((req, res, next) => {
   next();
 });
 
-const landingHTML = landingTemplate(addonInterface.manifest);
+const landingHTML = generateLandingHTML(addonInterface.manifest);
 const hasConfig = (addonInterface.manifest.config || []).length > 0;
 
 // Handle landing page - redirect to /configure if config is required
@@ -56,6 +56,7 @@ app.get('/proxy/image/:id/:type', (req, res, next) => {
 }, createImageProxyMiddleware(config, apiClient));
 
 app.use('/images', express.static(path.join(__dirname, '../../public/images')));
+app.use('/css', express.static(path.join(__dirname, '../../public/css')));
 
 app.get('/health', (req, res) => {
   res.json({

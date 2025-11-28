@@ -9,7 +9,7 @@ const express = require('express');
 const path = require('path');
 const fs = require('fs');
 const { getRouter } = require('stremio-addon-sdk');
-const landingTemplate = require('stremio-addon-sdk/src/landingTemplate');
+const generateLandingHTML = require('./lib/templates/landing_template');
 const config = require('./lib/config');
 const logger = require('./lib/logger');
 const addonInterface = require('./addon');
@@ -143,7 +143,7 @@ function serveHTTP(addonInterface, opts = {}) {
     logger.debug('Rate limiting and slow-down disabled');
   }
 
-  const landingHTML = landingTemplate(addonInterface.manifest);
+  const landingHTML = generateLandingHTML(addonInterface.manifest);
   const hasConfig = (addonInterface.manifest.config || []).length > 0;
 
   // Handle landing page - redirect to /configure if config is required
@@ -171,6 +171,9 @@ function serveHTTP(addonInterface, opts = {}) {
   const imagesPath = path.join(__dirname, 'images');
   const imagePath = fs.existsSync(publicImagesPath) ? publicImagesPath : imagesPath;
   app.use('/images', express.static(imagePath));
+
+  // Serve static CSS files
+  app.use('/css', express.static(path.join(__dirname, 'public', 'css')));
 
   app.get('/proxy/image/:id/:type', createImageProxyMiddleware(config, apiClient));
 

@@ -47,8 +47,9 @@
 # NODE_ENV=production
 # CACHE_ENABLED=true
 # CACHE_MAX_SIZE=1000
-# CATALOG_CACHE_ENABLED=true
-# CATALOG_PREFETCH=false  # Must be false for serverless
-# BROWSER_CACHE=true
+# CACHE_BROWSER_CACHE=true
+# CACHE_REDIS_URL=redis://...
+# CACHE_UPSTASH_REDIS_URL=https://...
+# CACHE_UPSTASH_REDIS_TOKEN=...
 # PUBLIC_URL=https://your-site.netlify.app
 
