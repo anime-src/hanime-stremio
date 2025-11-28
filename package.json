@@ -1,6 +1,6 @@
 {
 	"name": "stremio-addon-hanimetv",
-	"version": "1.0.4",
+	"version": "1.0.5",
 	"description": "Stremio addon for Hanime.tv - Browse and stream hentai content with advanced filtering",
 	"main": "server.js",
 	"scripts": {
