@@ -1,6 +1,5 @@
 # Hanime.tv Stremio Addon
 
-[![Netlify Status](https://api.netlify.com/api/v1/badges/aec4757e-b8a4-4062-b390-29defc8d309d/deploy-status)](https://app.netlify.com/projects/anime-src-hanime-stremio/deploys)
 [![Fly.io](https://img.shields.io/badge/Fly.io-deployed-success?logo=fly.io)](https://hanime-stremio.fly.dev)
 
 A Stremio addon for browsing and streaming content from Hanime.tv.
@@ -50,7 +49,7 @@ The addon will be accessible at `http://localhost:61327/manifest.json`
 ### Using Podman Compose
 
 ```bash
-podman-compose up -d
+podman compose up -d
 ```
 
 ### Using Node.js Directly
@@ -64,11 +63,12 @@ npm start
 
 A hosted version is available at:
 ```
-https://anime-src-hanime-stremio.netlify.app/manifest.json
-
 https://hanime-stremio.fly.dev/manifest.json
 ```
-
+Stremio Addons page:
+```
+https://stremio-addons.net/addons/hanime
+```
 > **Note:** Issues with the deployed version may be caused by free hosting limitations or Hanime CDN blocking. For best performance, self-host using Docker.
 
 ## Installation in Stremio
