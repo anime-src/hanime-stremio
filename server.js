@@ -96,6 +96,16 @@ function requestLogger(req, res, next) {
 function serveHTTP(addonInterface, opts = {}) {
   const app = express();
 
+  // Trust proxy for accurate IP detection when behind reverse proxy/load balancer
+  // This is required for express-rate-limit to correctly identify users via X-Forwarded-For
+  // Safe to enable in Docker/containerized environments and when behind nginx/load balancers
+  const trustProxy = process.env.TRUST_PROXY !== 'false'; // Default: true, can disable with TRUST_PROXY=false
+  app.set('trust proxy', trustProxy);
+  
+  if (trustProxy) {
+    logger.debug('Express trust proxy enabled (for accurate IP detection behind proxies)');
+  }
+
   app.use(requestLogger);
 
   // Apply rate limiting and slow-down if enabled
