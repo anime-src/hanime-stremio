@@ -69,6 +69,12 @@ async function testAlwaysUsesAuthenticatedWorkerRelay() {
     handshakeRequest.options.headers.authorization,
     'Bearer relay-secret'
   );
+  const proxiedUrl = new URL(streams[0].url);
+  assert.strictEqual(proxiedUrl.origin, 'https://hanime-handshake.skynetsource.com');
+  assert.strictEqual(proxiedUrl.pathname, '/hls');
+  assert.strictEqual(proxiedUrl.searchParams.get('url'), 'https://hanime.tv/hls/relay-720');
+  assert.ok(Number(proxiedUrl.searchParams.get('expires')) > Math.floor(Date.now() / 1000));
+  assert.ok(proxiedUrl.searchParams.get('signature'));
 }
 
 function testDefaultHandshakeAuthorityIsWorkerRelay() {
