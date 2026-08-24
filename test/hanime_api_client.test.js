@@ -85,6 +85,33 @@ async function testSearchUsesSearchHvsDataset() {
   assert.deepStrictEqual(calls, [['get', searchUrl]]);
 }
 
+async function testSearchAcceptsCurrentDataWrappedDataset() {
+  axios.get = async () => ({
+    status: 200,
+    data: {
+      data: [{
+        id: 4,
+        name: 'Current API Episode',
+        search_titles: 'Current Episode',
+        slug: 'current-api-episode',
+        description: '<p>Current search payload shape</p>',
+        brand: 'Queen Bee',
+        tags: ['hd'],
+        views: 10,
+        likes: 2,
+        created_at_unix: 100,
+        released_at_unix: 1000
+      }],
+      ads: []
+    }
+  });
+
+  const client = new HanimeApiClient(config);
+  const results = await client.search({ query: 'current' });
+
+  assert.deepStrictEqual(results.map(item => item.slug), ['current-api-episode']);
+}
+
 async function testVideoMetadataUsesSearchDatasetWithoutCallingRetiredEndpoint() {
   const requestedUrls = [];
   axios.get = async (url) => {
@@ -177,6 +204,7 @@ function testSearchDatasetCacheWindowIsSixHours() {
 async function main() {
   try {
     await testSearchUsesSearchHvsDataset();
+    await testSearchAcceptsCurrentDataWrappedDataset();
     await testVideoMetadataUsesSearchDatasetWithoutCallingRetiredEndpoint();
     await testProductionSearchUsesAuthenticatedWorkerRelay();
     await testVideoMetadataNormalizesSearchDatasetFields();
