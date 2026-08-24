@@ -68,7 +68,8 @@ function allowedHlsUrl(value) {
     // prevents the public playback URL from becoming an open proxy.
     if (
       url.hostname === 'ct.htv-services.com' ||
-      /^p\d+\.hydaelyn-25x-\d{2}\.top$/.test(url.hostname)
+      /^p\d+\.hydaelyn-25x-\d{2}\.top$/.test(url.hostname) ||
+      /^etheirys\.htv-hydaelyn-\d{2}\.com$/.test(url.hostname)
     ) {
       return url;
     }

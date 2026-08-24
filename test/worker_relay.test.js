@@ -194,7 +194,7 @@ async function testProxiesAndRewritesSignedHlsPlaylists() {
     fetchImpl: async (request) => {
       upstreamRequests.push(request);
       return new Response(
-        '#EXTM3U\n#EXT-X-KEY:METHOD=AES-128,URI="https://ct.htv-services.com/keys/video.key"\n#EXTINF:4.0,\nchunks/segment-01.ts\n#EXTINF:4.0,\nhttps://p34.hydaelyn-25x-18.top/chunks/segment-02.ts\n',
+        '#EXTM3U\n#EXT-X-KEY:METHOD=AES-128,URI="https://ct.htv-services.com/keys/video.key"\n#EXTINF:4.0,\nchunks/segment-01.ts\n#EXTINF:4.0,\nhttps://p34.hydaelyn-25x-18.top/chunks/segment-02.ts\n#EXTINF:4.0,\nhttps://etheirys.htv-hydaelyn-05.com/chunks/segment-03.ts\n',
         { headers: { 'content-type': 'application/x-mpegURL' } }
       );
     }
@@ -213,11 +213,13 @@ async function testProxiesAndRewritesSignedHlsPlaylists() {
   assert.strictEqual(upstreamRequests[0].headers.get('range'), 'bytes=0-2047');
   assert.deepStrictEqual(proxiedTargets.sort(), [
     'https://ct.htv-services.com/keys/video.key',
+    'https://etheirys.htv-hydaelyn-05.com/chunks/segment-03.ts',
     'https://hanime.tv/hls/chunks/segment-01.ts',
     'https://p34.hydaelyn-25x-18.top/chunks/segment-02.ts'
   ]);
   assert.ok(!playlist.includes('\nchunks/segment-01.ts\n'));
   assert.ok(!playlist.includes('URI="https://ct.htv-services.com/keys/video.key"'));
+  assert.ok(!playlist.includes('etheirys.htv-hydaelyn-05.com/chunks/segment-03.ts'));
 }
 
 async function run() {
