@@ -90,7 +90,7 @@ const manifest = {
       extra: constants.catalogExtrasSortOnly
     },
     {
-      type: constants.contentTypes.ANIME,
+      type: constants.contentTypes.SERIES,
       name: 'Hanime Uncensored',
       id: constants.catalogCategories.UNCENSORED,
       extra: constants.catalogExtrasUncensored
