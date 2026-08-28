@@ -112,6 +112,34 @@ async function testSearchAcceptsCurrentDataWrappedDataset() {
   assert.deepStrictEqual(results.map(item => item.slug), ['current-api-episode']);
 }
 
+async function testSearchCanReturnAllFilteredResultsBeforePagination() {
+  axios.get = async () => ({
+    status: 200,
+    data: [1, 2, 3].map(number => ({
+      id: number,
+      name: `Grouped Show ${number}`,
+      slug: `grouped-show-${number}`,
+      tags: ['uncensored'],
+      created_at_unix: number
+    }))
+  });
+
+  const client = new HanimeApiClient({
+    ...config,
+    pagination: { itemsPerPage: 2 }
+  });
+  const results = await client.search({
+    tags: ['uncensored'],
+    paginate: false
+  });
+
+  assert.deepStrictEqual(results.map(item => item.slug), [
+    'grouped-show-3',
+    'grouped-show-2',
+    'grouped-show-1'
+  ]);
+}
+
 async function testVideoMetadataUsesSearchDatasetWithoutCallingRetiredEndpoint() {
   const requestedUrls = [];
   axios.get = async (url) => {
@@ -205,6 +233,7 @@ async function main() {
   try {
     await testSearchUsesSearchHvsDataset();
     await testSearchAcceptsCurrentDataWrappedDataset();
+    await testSearchCanReturnAllFilteredResultsBeforePagination();
     await testVideoMetadataUsesSearchDatasetWithoutCallingRetiredEndpoint();
     await testProductionSearchUsesAuthenticatedWorkerRelay();
     await testVideoMetadataNormalizesSearchDatasetFields();

@@ -117,12 +117,65 @@ async function testUncensoredCatalogToSeriesMetaRouting() {
   assert.strictEqual(videoDataCalls, 2);
 }
 
+async function testUncensoredCatalogGroupsNumberedEpisodesAndKeepsStandaloneVideos() {
+  const episodes = Array.from({ length: 12 }, (_, index) => ({
+    ...uncensoredVideo,
+    slug: `isekai-meikyuu-de-harem-wo-${index + 1}`,
+    name: `Isekai Meikyuu de Harem wo ${index + 1}`
+  }));
+  const standalone = {
+    ...uncensoredVideo,
+    slug: 'standalone-film',
+    name: 'Standalone Film'
+  };
+  const config = {
+    cache: { ttl: { catalog: 1 } },
+    pagination: { itemsPerPage: 20 }
+  };
+  let searchCalls = 0;
+  const apiClient = {
+    async search() {
+      searchCalls++;
+      return [...episodes, standalone];
+    }
+  };
+  const handler = new CatalogHandler(apiClient, { warn() {}, error() {} }, config);
+
+  const response = await handler.handle({
+    id: constants.catalogCategories.UNCENSORED,
+    extra: { search: 'isekai grouping regression' }
+  });
+
+  assert.deepStrictEqual(response.metas.map(item => item.id), [
+    'hanime:series:isekai-meikyuu-de-harem-wo',
+    'hanime:standalone-film'
+  ]);
+  assert.strictEqual(response.metas[0].type, constants.contentTypes.SERIES);
+  assert.match(response.metas[0].description, /^12 Episodes/);
+  assert.strictEqual(response.metas[1].type, constants.contentTypes.SERIES);
+  assert.strictEqual(response.metas[1].behaviorHints.defaultVideoId, 'hanime:standalone-film');
+
+  const secondPageHandler = new CatalogHandler(apiClient, { warn() {}, error() {} }, {
+    ...config,
+    pagination: { itemsPerPage: 1 }
+  });
+  const secondPage = await secondPageHandler.handle({
+    id: constants.catalogCategories.UNCENSORED,
+    extra: { search: 'isekai grouping regression', skip: 1 }
+  });
+  assert.deepStrictEqual(secondPage.metas.map(item => item.id), [
+    'hanime:standalone-film'
+  ]);
+  assert.strictEqual(searchCalls, 1);
+}
+
 async function run() {
   testCleanDescriptionPreservesLetterP();
   testStreamMetadataUsesStremioCompatibleNotation();
   testUncensoredCatalogUsesPlayableSeriesEntries();
   testDefaultCatalogAndMetaRemainAnime();
   await testUncensoredCatalogToSeriesMetaRouting();
+  await testUncensoredCatalogGroupsNumberedEpisodesAndKeepsStandaloneVideos();
   console.log('transformer tests passed');
 }
 
