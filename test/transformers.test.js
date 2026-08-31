@@ -121,15 +121,21 @@ function testDefaultCatalogAndMetaRemainAnime() {
 }
 
 async function testUncensoredCatalogToSeriesMetaRouting() {
+  assert.strictEqual(constants.uncensoredBrands.includes('Suiseisha'), false);
   const config = {
     cache: { ttl: { catalog: 1, meta: 1 } },
     pagination: { itemsPerPage: 20 }
   };
   const logger = { warn() {}, error() {} };
   let videoDataCalls = 0;
+  let seriesSearchParams;
   const apiClient = {
-    async search() {
-      return [uncensoredVideo];
+    async search(params) {
+      seriesSearchParams = params;
+      return [{
+        ...uncensoredVideo,
+        tags: ['uncensored', 'censored', 'hd', '2000-year-old dragon girl']
+      }];
     },
     async getVideoData() {
       videoDataCalls++;
@@ -154,12 +160,16 @@ async function testUncensoredCatalogToSeriesMetaRouting() {
   });
 
   assert.strictEqual(catalog.metas[0].type, constants.contentTypes.SERIES);
+  assert.deepStrictEqual(catalog.metas[0].genre, ['Hd', 'MS Pictures']);
+  assert.deepStrictEqual(catalog.metas[0].genres, ['Hd', 'MS Pictures']);
   assert.strictEqual(response.meta.type, constants.contentTypes.SERIES);
   assert.strictEqual(response.meta.videos.length, 1);
   assert.strictEqual(response.meta.videos[0].id, videoId);
   assert.strictEqual(animeResponse.meta.type, constants.contentTypes.ANIME);
   assert.strictEqual(animeResponse.meta.videos, undefined);
   assert.strictEqual(videoDataCalls, 2);
+  assert.strictEqual(seriesSearchParams.paginate, false);
+  assert.strictEqual(seriesSearchParams.query, '');
 }
 
 async function testUncensoredCatalogGroupsNumberedEpisodesAndKeepsStandaloneVideos() {
@@ -196,12 +206,12 @@ async function testUncensoredCatalogGroupsNumberedEpisodesAndKeepsStandaloneVide
     'hanime:standalone-film'
   ]);
   assert.strictEqual(response.metas[0].type, constants.contentTypes.SERIES);
-  assert.deepStrictEqual(response.metas[0].genre, ['Uncensored', 'MS Pictures']);
-  assert.deepStrictEqual(response.metas[0].genres, ['Uncensored', 'MS Pictures']);
+  assert.deepStrictEqual(response.metas[0].genre, ['MS Pictures']);
+  assert.deepStrictEqual(response.metas[0].genres, ['MS Pictures']);
   assert.match(response.metas[0].description, /^12 Episodes/);
   assert.strictEqual(response.metas[1].type, constants.contentTypes.SERIES);
-  assert.deepStrictEqual(response.metas[1].genre, ['Uncensored', 'MS Pictures']);
-  assert.deepStrictEqual(response.metas[1].genres, ['Uncensored', 'MS Pictures']);
+  assert.deepStrictEqual(response.metas[1].genre, ['MS Pictures']);
+  assert.deepStrictEqual(response.metas[1].genres, ['MS Pictures']);
   assert.strictEqual(response.metas[1].behaviorHints.defaultVideoId, 'hanime:standalone-film');
 
   const secondPageHandler = new CatalogHandler(apiClient, { warn() {}, error() {} }, {

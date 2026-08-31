@@ -140,6 +140,24 @@ async function testSearchCanReturnAllFilteredResultsBeforePagination() {
   ]);
 }
 
+async function testSearchNormalizesPunctuationInSeriesNames() {
+  axios.get = async () => ({
+    status: 200,
+    data: [{
+      id: 1,
+      name: 'Gosenzo San`e 1',
+      slug: 'gosenzo-sane-1',
+      tags: ['uncensored'],
+      created_at_unix: 1
+    }]
+  });
+
+  const client = new HanimeApiClient(config);
+  const results = await client.search({ query: 'gosenzo sane' });
+
+  assert.deepStrictEqual(results.map(item => item.slug), ['gosenzo-sane-1']);
+}
+
 async function testVideoMetadataUsesSearchDatasetWithoutCallingRetiredEndpoint() {
   const requestedUrls = [];
   axios.get = async (url) => {
@@ -234,6 +252,7 @@ async function main() {
     await testSearchUsesSearchHvsDataset();
     await testSearchAcceptsCurrentDataWrappedDataset();
     await testSearchCanReturnAllFilteredResultsBeforePagination();
+    await testSearchNormalizesPunctuationInSeriesNames();
     await testVideoMetadataUsesSearchDatasetWithoutCallingRetiredEndpoint();
     await testProductionSearchUsesAuthenticatedWorkerRelay();
     await testVideoMetadataNormalizesSearchDatasetFields();
