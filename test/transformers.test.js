@@ -1,8 +1,8 @@
 const assert = require('assert');
 const constants = require('../lib/constants');
-const { cleanDescription } = require('../lib/transformers/formatters');
+const { buildGenreCategories, cleanDescription } = require('../lib/transformers/formatters');
 const { toStremioCatalog } = require('../lib/transformers/catalog_transformer');
-const { toStremioMeta } = require('../lib/transformers/meta_transformer');
+const { toStremioMeta, toStremioSeriesMeta } = require('../lib/transformers/meta_transformer');
 const { toStremioStream } = require('../lib/transformers/stream_transformer');
 const CatalogHandler = require('../lib/handlers/catalog_handler');
 const MetaHandler = require('../lib/handlers/meta_handler');
@@ -13,8 +13,19 @@ const uncensoredVideo = {
   description: '<p>Test description</p>',
   tags: ['uncensored'],
   hentai_tags: [{ text: 'uncensored' }],
+  brand: 'MS Pictures',
   released_at_unix: 1_700_000_000
 };
+
+function testManifestScopesHanimeIdResources() {
+  const { manifest } = require('../addon');
+
+  assert.deepStrictEqual(manifest.resources, [
+    'catalog',
+    { name: 'stream', types: ['anime', 'series'], idPrefixes: ['hanime'] },
+    { name: 'meta', types: ['anime', 'series'], idPrefixes: ['hanime'] }
+  ]);
+}
 
 function testCleanDescriptionPreservesLetterP() {
   const description = '<p>A popular episode with plenty of suspense.</p>\n<p>Part two.</p>';
@@ -22,6 +33,17 @@ function testCleanDescriptionPreservesLetterP() {
   assert.strictEqual(
     cleanDescription(description),
     'A popular episode with plenty of suspense.\nPart two.'
+  );
+}
+
+function testGenreCategoriesDeduplicateBrandAndIgnoreBlankValues() {
+  assert.deepStrictEqual(
+    buildGenreCategories(['vanilla'], 'Vanilla'),
+    ['Vanilla']
+  );
+  assert.deepStrictEqual(
+    buildGenreCategories(['uncensored'], '   '),
+    ['Uncensored']
   );
 }
 
@@ -49,6 +71,8 @@ function testStreamMetadataUsesStremioCompatibleNotation() {
 function testUncensoredCatalogUsesPlayableSeriesEntries() {
   const [item] = toStremioCatalog([uncensoredVideo], constants.contentTypes.SERIES);
   assert.strictEqual(item.type, constants.contentTypes.SERIES);
+  assert.deepStrictEqual(item.genre, ['Uncensored', 'MS Pictures']);
+  assert.deepStrictEqual(item.genres, ['Uncensored', 'MS Pictures']);
 
   const meta = toStremioMeta(
     uncensoredVideo,
@@ -56,6 +80,15 @@ function testUncensoredCatalogUsesPlayableSeriesEntries() {
     constants.contentTypes.SERIES
   );
   assert.strictEqual(meta.type, constants.contentTypes.SERIES);
+  assert.deepStrictEqual(meta.genre, ['Uncensored', 'MS Pictures']);
+  assert.strictEqual(
+    meta.links.filter(link => link.name === 'MS Pictures').length,
+    1
+  );
+  assert.strictEqual(
+    meta.links.find(link => link.name === 'MS Pictures').category,
+    'Studio'
+  );
   assert.deepStrictEqual(meta.videos, [{
     id: 'hanime:uncensored-test-video',
     title: 'Uncensored Test Video',
@@ -64,6 +97,18 @@ function testUncensoredCatalogUsesPlayableSeriesEntries() {
     episode: 1,
     overview: 'Test description'
   }]);
+}
+
+function testGroupedSeriesIncludesBrandAsGenreCategory() {
+  const meta = toStremioSeriesMeta(
+    'series:uncensored-test-video',
+    'Uncensored Test Video',
+    [uncensoredVideo],
+    {}
+  );
+
+  assert.deepStrictEqual(meta.genre, ['Uncensored', 'MS Pictures']);
+  assert.deepStrictEqual(meta.genres, ['Uncensored', 'MS Pictures']);
 }
 
 function testDefaultCatalogAndMetaRemainAnime() {
@@ -151,8 +196,12 @@ async function testUncensoredCatalogGroupsNumberedEpisodesAndKeepsStandaloneVide
     'hanime:standalone-film'
   ]);
   assert.strictEqual(response.metas[0].type, constants.contentTypes.SERIES);
+  assert.deepStrictEqual(response.metas[0].genre, ['Uncensored', 'MS Pictures']);
+  assert.deepStrictEqual(response.metas[0].genres, ['Uncensored', 'MS Pictures']);
   assert.match(response.metas[0].description, /^12 Episodes/);
   assert.strictEqual(response.metas[1].type, constants.contentTypes.SERIES);
+  assert.deepStrictEqual(response.metas[1].genre, ['Uncensored', 'MS Pictures']);
+  assert.deepStrictEqual(response.metas[1].genres, ['Uncensored', 'MS Pictures']);
   assert.strictEqual(response.metas[1].behaviorHints.defaultVideoId, 'hanime:standalone-film');
 
   const secondPageHandler = new CatalogHandler(apiClient, { warn() {}, error() {} }, {
@@ -170,9 +219,12 @@ async function testUncensoredCatalogGroupsNumberedEpisodesAndKeepsStandaloneVide
 }
 
 async function run() {
+  testManifestScopesHanimeIdResources();
   testCleanDescriptionPreservesLetterP();
+  testGenreCategoriesDeduplicateBrandAndIgnoreBlankValues();
   testStreamMetadataUsesStremioCompatibleNotation();
   testUncensoredCatalogUsesPlayableSeriesEntries();
+  testGroupedSeriesIncludesBrandAsGenreCategory();
   testDefaultCatalogAndMetaRemainAnime();
   await testUncensoredCatalogToSeriesMetaRouting();
   await testUncensoredCatalogGroupsNumberedEpisodesAndKeepsStandaloneVideos();
