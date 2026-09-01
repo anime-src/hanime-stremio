@@ -90,7 +90,7 @@ const manifest = {
       extra: constants.catalogExtrasSortOnly
     },
     {
-      type: constants.contentTypes.ANIME,
+      type: constants.contentTypes.SERIES,
       name: 'Hanime Uncensored',
       id: constants.catalogCategories.UNCENSORED,
       extra: constants.catalogExtrasUncensored
@@ -103,7 +103,19 @@ const manifest = {
       extra: constants.catalogExtrasMinimal
     }
   ],
-  resources: ['catalog', 'stream', 'meta'],
+  resources: [
+    'catalog',
+    {
+      name: 'stream',
+      types: [constants.contentTypes.ANIME, constants.contentTypes.SERIES],
+      idPrefixes: [constants.addonPrefix]
+    },
+    {
+      name: 'meta',
+      types: [constants.contentTypes.ANIME, constants.contentTypes.SERIES],
+      idPrefixes: [constants.addonPrefix]
+    }
+  ],
   types: [constants.contentTypes.ANIME, constants.contentTypes.SERIES],
   idPrefixes: [constants.addonPrefix],
   name: config.addon.name,

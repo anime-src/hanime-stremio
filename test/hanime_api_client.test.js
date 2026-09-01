@@ -85,6 +85,79 @@ async function testSearchUsesSearchHvsDataset() {
   assert.deepStrictEqual(calls, [['get', searchUrl]]);
 }
 
+async function testSearchAcceptsCurrentDataWrappedDataset() {
+  axios.get = async () => ({
+    status: 200,
+    data: {
+      data: [{
+        id: 4,
+        name: 'Current API Episode',
+        search_titles: 'Current Episode',
+        slug: 'current-api-episode',
+        description: '<p>Current search payload shape</p>',
+        brand: 'Queen Bee',
+        tags: ['hd'],
+        views: 10,
+        likes: 2,
+        created_at_unix: 100,
+        released_at_unix: 1000
+      }],
+      ads: []
+    }
+  });
+
+  const client = new HanimeApiClient(config);
+  const results = await client.search({ query: 'current' });
+
+  assert.deepStrictEqual(results.map(item => item.slug), ['current-api-episode']);
+}
+
+async function testSearchCanReturnAllFilteredResultsBeforePagination() {
+  axios.get = async () => ({
+    status: 200,
+    data: [1, 2, 3].map(number => ({
+      id: number,
+      name: `Grouped Show ${number}`,
+      slug: `grouped-show-${number}`,
+      tags: ['uncensored'],
+      created_at_unix: number
+    }))
+  });
+
+  const client = new HanimeApiClient({
+    ...config,
+    pagination: { itemsPerPage: 2 }
+  });
+  const results = await client.search({
+    tags: ['uncensored'],
+    paginate: false
+  });
+
+  assert.deepStrictEqual(results.map(item => item.slug), [
+    'grouped-show-3',
+    'grouped-show-2',
+    'grouped-show-1'
+  ]);
+}
+
+async function testSearchNormalizesPunctuationInSeriesNames() {
+  axios.get = async () => ({
+    status: 200,
+    data: [{
+      id: 1,
+      name: 'Gosenzo San`e 1',
+      slug: 'gosenzo-sane-1',
+      tags: ['uncensored'],
+      created_at_unix: 1
+    }]
+  });
+
+  const client = new HanimeApiClient(config);
+  const results = await client.search({ query: 'gosenzo sane' });
+
+  assert.deepStrictEqual(results.map(item => item.slug), ['gosenzo-sane-1']);
+}
+
 async function testVideoMetadataUsesSearchDatasetWithoutCallingRetiredEndpoint() {
   const requestedUrls = [];
   axios.get = async (url) => {
@@ -177,6 +250,9 @@ function testSearchDatasetCacheWindowIsSixHours() {
 async function main() {
   try {
     await testSearchUsesSearchHvsDataset();
+    await testSearchAcceptsCurrentDataWrappedDataset();
+    await testSearchCanReturnAllFilteredResultsBeforePagination();
+    await testSearchNormalizesPunctuationInSeriesNames();
     await testVideoMetadataUsesSearchDatasetWithoutCallingRetiredEndpoint();
     await testProductionSearchUsesAuthenticatedWorkerRelay();
     await testVideoMetadataNormalizesSearchDatasetFields();

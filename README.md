@@ -2,40 +2,42 @@
 
 [![Fly.io](https://img.shields.io/badge/Fly.io-hosting-unavailable?logo=fly.io&color=lightgrey)](#)
 
-A self-hostable Stremio addon for browsing and streaming content from Hanime.tv, with authenticated stream access, catalog search, genre filtering, brand/studio filtering, and an Uncensored catalog.
+A self-hostable Stremio addon for browsing and streaming content from Hanime.tv, with guest playback, optional account-based premium qualities, catalog search, genre filtering, brand/studio filtering, and an Uncensored catalog.
 
-# ⚠️ Important Announcement – Configuration Required
+# Playback and Optional Account Configuration
 
-Hanime has **removed all stream URLs from their public API**.  
-To access streams, the addon now requires **authentication with your Hanime account**.
+Hanime removed stream URLs from its public metadata API. The addon now resolves
+playback through Hanime's signed web handshake. Guest playback works without an
+account and normally exposes up to 720p. Supplying Hanime credentials is
+optional and may unlock premium qualities such as 1080p.
 
 ---
 
-### ✅ Configuration Required
+### Account configuration
 
-This addon version includes a **required configuration page** with credential verification.  
-You **must** enter your **Hanime email and password** to access streams.
+The configure page can verify Hanime credentials before generating an install
+URL. If credentials are omitted or login fails, playback falls back to the
+guest handshake instead of returning no streams.
 
 **Benefits:**
-- ✅ **Streams are now working** with authenticated access
-- ✅ **Premium users** automatically get **1080p quality**
-- ✅ The configure page verifies credentials before generating the install URL
-- ✅ Credentials are securely stored and only used for API authentication
-- ✅ Multiple users can use the same addon instance with different credentials
+- Guest playback without credentials
+- Premium users can receive 1080p when Hanime exposes it for their session
+- Credential verification before generating a configured install URL
+- Per-user sessions without server-side plaintext password storage
 
 **How to Configure:**
 1. Install the addon in Stremio
-2. When prompted, click "Configure" or go to the addon settings
-3. Enter your Hanime email and password
-4. Save the configuration
-5. Streams will now work!
+2. Optionally click "Configure" and enter your Hanime email and password
+3. Verify and save the configuration
 
 ---
 
-### 🔒 Security Note
+### Security Note
 
-Your credentials are stored locally in Stremio and only sent to Hanime's API for authentication.  
-The addon does not store or log your password in plain text.
+Credentials are carried in the configured Stremio addon URL and sent to the
+addon only when authentication is requested. The addon uses them to create a
+Hanime session and does not log the password in plaintext. Protect configured
+install URLs as secrets.
 
 ## Quick Start
 
@@ -91,8 +93,9 @@ https://stremio-addons.net/addons/hanime
 
 This fork includes several changes beyond the original Hanime Stremio addon:
 
-- Authenticated stream access after Hanime removed stream URLs from the public API
-- Required configuration flow for Hanime email/password credentials
+- Signed guest stream access after Hanime removed stream URLs from the public API
+- Optional Hanime account configuration for premium stream qualities
+- Signed Cloudflare Worker HLS proxy for networks blocked by Hanime's Cloudflare rules
 - `/verify` endpoint used by the configure page to test credentials before install
 - Multi-user session handling so different Stremio users can use different Hanime credentials
 - Premium account support for 1080p streams when Hanime marks the account as premium
@@ -127,6 +130,7 @@ Key environment variables:
 | `ADDON_VERSION` | package version | Override manifest version |
 | `HTV_HANDSHAKE_URL` | hosted relay URL | Cloudflare Worker handshake relay endpoint |
 | `HTV_RELAY_SECRET` | - | Bearer secret shared with the handshake relay Worker |
+| `HTV_HLS_PROXY_URL` | hosted relay `/hls` URL | Signed HLS playlist, key, and media proxy endpoint |
 
 See `docker-compose.yml` for all available options.
 
@@ -139,18 +143,24 @@ direct upstream fallback. The current addon routes both catalog data and stream
 handshakes through the Worker at all times so production behavior is
 consistent.
 
-The Worker exposes only these authenticated, fixed-target routes:
+The Worker exposes only these constrained routes:
 
 - `GET /api/v11/search_hvs` for the signed catalog search dataset
 - `POST /api/v11/handshake` for playable stream handshakes
+- `GET /hls` for time-limited, HMAC-signed HLS playlist, key, and media requests
+
+The HLS route accepts only signed HTTPS targets on Hanime's known playlist,
+key, and numbered media hosts. It rewrites every child reference in a playlist
+back through the same route, so neither Oracle nor the viewer needs direct
+access to Hanime's Cloudflare-protected media hosts. It is not an open proxy.
 
 The hosted Worker uses `hanime-handshake.skynetsource.com`. On a new hosted
 addon machine, set `HTV_RELAY_SECRET` to the same value as the Worker's
 `RELAY_SECRET`; never commit that value. If deploying a separate Worker domain,
-update both relay targets: set `HTV_HANDSHAKE_URL` for the handshake route and
-change `config.api.searchUrl` in `lib/config.js` for the search route. Changing
-only the handshake URL will leave catalogs and posters pointed at the hosted
-Worker with the wrong secret.
+update all relay targets: set `HTV_HANDSHAKE_URL` for the handshake route,
+`HTV_HLS_PROXY_URL` for playback, and change `config.api.searchUrl` in
+`lib/config.js` for the search route. Changing only one route leaves part of
+the addon pointed at the old Worker.
 
 Deploy the included Worker after adjusting its account and custom domain:
 
@@ -161,13 +171,14 @@ npx wrangler deploy --config workers/handshake-relay/wrangler.jsonc
 ```
 
 Set the identical value as `HTV_RELAY_SECRET` in the addon environment. The
-relay accepts only the authenticated handshake POST and signed search-dataset
-GET routes. Both have fixed Hanime upstreams; it is not a general-purpose proxy.
+secret authenticates the API relay routes and signs short-lived HLS proxy URLs.
+Because media bytes traverse the Worker, monitor Cloudflare bandwidth and
+request limits on hosted deployments.
 
-After deploying from a non-residential host, verify multiple catalog categories
-and a poster, film/series metadata, all stream qualities, parseable file
-size/duration tags, and an HLS playlist fetched from a residential connection
-before treating the deployment as healthy.
+After deploying, verify multiple catalog categories and a poster, film/series
+metadata, all stream qualities, parseable file size/duration tags, a rewritten
+HLS playlist, and a ranged media response through the Worker before treating
+the deployment as healthy.
 
 Upstream caches are demand-driven; the addon does not poll Hanime on a timer.
 Stream handshakes and the shared search dataset are reused for six hours after
@@ -199,7 +210,8 @@ These scripts probe Hanime's search API with paced requests and update:
 ## Troubleshooting
 
 - **Thumbnails not loading**: Ensure `PUBLIC_URL` is set correctly
-- **No streams**: Check network connectivity and enable `LOG_LEVEL=debug`
+- **No streams**: Check `HTV_RELAY_SECRET`, Worker deployment health, and enable `LOG_LEVEL=debug`
+- **Playlist loads but playback fails**: Confirm playlist child URLs point to the Worker `/hls` route and that a ranged media request returns HTTP 206
 - **Credential verification fails**: Confirm the Hanime account works on hanime.tv and retry from `/configure`
 - **Duplicate search rows**: Reinstall the addon so Stremio picks up the latest manifest extras
 - **High memory**: Reduce `CACHE_MAX_SIZE`
